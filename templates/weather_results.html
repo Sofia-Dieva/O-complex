@@ -1,0 +1,62 @@
+<div class="p-5" style="display: inline-grid; justify-content: center; align-items: center; width: -webkit-fill-available; background-color: lightgoldenrodyellow; border: brown dotted;">
+    <h2 class="text-center">Прогноз для города {{ city }}</h2>
+    <table class="text-center">
+        <tr>
+            <th>Время</th>
+            <th style="width: 25vh">Температура (°C)</th>
+            <th>Вероятность осадков (%)</th>
+            <th>Погодные условия</th>
+        </tr>
+        {% for time, temp, precip, code in hourly_data %}
+        <tr>
+            <td>{{ time[11:16] }}</td>
+            <td>{{ temp }}</td>
+            <td>{{ precip }}</td>
+            <td data-code="{{ code }}">{{ code }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<script>
+function get_weather_description(code) {
+    const weather_codes = {
+        0: ['<i class="bi bi-brightness-high"></i>', "Ясно"],
+        1: ['<i class="bi bi-brightness-high"></i>', "Преимущественно ясно"],
+        2: ['<i class="bi bi-cloud-sun"></i>', "Переменная облачность"],
+        3: ['<i class="bi bi-clouds"></i>', "Пасмурно"],
+        45: ['<i class="bi bi-cloud-fog"></i>', "Туман"],
+        48: ['<i class="bi bi-snow2"></i>', "Изморозь"],
+        51: ['<i class="bi bi-cloud-drizzle"></i>', "Легкая морось"],
+        53: ['<i class="bi bi-cloud-drizzle"></i>', "Умеренная морось"],
+        55: ['<i class="bi bi-cloud-drizzle"></i>', "Сильная морось"],
+        56: ['<i class="bi bi-cloud-drizzle"></i>', "Легкий ледяной дождь"],
+        57: ['<i class="bi bi-cloud-rain-heavy"></i>', "Сильный ледяной дождь"],
+        61: ['<i class="bi bi-cloud-drizzle"></i>', "Небольшой дождь"],
+        63: ['<i class="bi bi-cloud-drizzle"></i>', "Умеренный дождь"],
+        65: ['<i class="bi bi-cloud-rain-heavy"></i>', "Сильный дождь"],
+        66: ['<i class="bi bi-cloud-drizzle"></i>', "Небольшой ледяной дождь"],
+        67: ['<i class="bi bi-cloud-rain-heavy"></i>', "Сильный ледяной дождь"],
+        71: ['<i class="bi bi-cloud-snow"></i>', "Небольшой снег"],
+        73: ['<i class="bi bi-cloud-snow"></i>', "Умеренный снег"],
+        75: ['<i class="bi bi-cloud-snow"></i>', "Сильный снег"],
+        77: ['<i class="bi bi-cloud-snow"></i>', "Снежные зерна"],
+        80: ['<i class="bi bi-cloud-drizzle"></i>', "Небольшой ливень"],
+        81: ['<i class="bi bi-cloud-rain-heavy"></i>', "Умеренный ливень"],
+        82: ['<i class="bi bi-cloud-rain-heavy"></i>', "Сильный ливень"],
+        85: ['<i class="bi bi-cloud-snow"></i>', "Небольшой снегопад"],
+        86: ['<i class="bi bi-cloud-snow"></i>', "Сильный снегопад"],
+        95: ['<i class="bi bi-cloud-lightning-rain"></i>', "Гроза"],
+        96: ['<i class="bi bi-cloud-lightning-rain"></i>', "Гроза с небольшим градом"],
+        99: ['<i class="bi bi-cloud-lightning-rain"></i>', "Гроза с сильным градом"]
+    };
+    const [icon, description] = weather_codes[code] || ['', "Неизвестно"];
+    return `${icon} ${description}`;
+}
+
+// Заменяем коды на описания
+document.querySelectorAll('table tr td:last-child').forEach(cell => {
+    const code = parseInt(cell.getAttribute('data-code'));
+    cell.innerHTML = get_weather_description(code);
+});
+</script>

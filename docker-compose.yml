@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  weatherapp:
+    build:
+      context: ./
+    container_name:  weatherapp
+    ports:
+      - "80:80"
+    volumes:
+      - .:/code

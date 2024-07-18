@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Прогноз погоды</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+        <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="m-5 d-grid">
+        <div class="d-flex gap-4" style="justify-self: center">
+            <div class="p-3 text-center mb-4" style="background-color: aliceblue; width: 90vh; justify-self: center; border: brown dotted;">
+                <h1>Прогноз погоды</h1>
+                <form id="weather-form" method="post">
+                    <input class="placeholder btn col-4 bg-white" type="text" id="city" name="city" placeholder="Введите город" required>
+                    <button class="btn" style="background: wheat;" type="submit">Получить прогноз</button>
+                </form>
+
+                <p class="pt-4" id="last-search-container" style="display: none;">
+                    Последний поиск: <a href="#" id="last-search"></a>
+                </p>
+            </div>
+            <div>
+                <h3>История поиска:</h3>
+                <ul id="search-history"></ul>
+            </div>
+        </div>
+        <div id="weather-results"></div>
+    </div>
+    <script>
+    $(function() {
+        $("#city").autocomplete({
+            minLength: 0,
+            source: [],
+            select: function(event, ui) {
+                $("#city").val(ui.item.value);
+                return false;
+            }
+        });
+
+        // Загрузка истории поиска
+        loadSearchHistory();
+
+        // Обработка отправки формы
+        $("#weather-form").submit(function(e) {
+            e.preventDefault();
+            var city = $("#city").val();
+            getWeather(city);
+            saveToSearchHistory(city);
+        });
+
+        // Обработка клика по последнему поиску
+        $("#last-search").click(function(e) {
+            e.preventDefault();
+            var city = $(this).text();
+            $("#city").val(city);
+            getWeather(city);
+        });
+
+        function getWeather(city) {
+            $.post("/", { city: city }, function(data) {
+                $("#weather-results").html(data);
+            });
+        }
+
+        function saveToSearchHistory(city) {
+            var history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+            history.unshift(city);
+            history = history.slice(0, 5);
+            localStorage.setItem('searchHistory', JSON.stringify(history));
+            loadSearchHistory();
+        }
+
+        // Загружаем историю из localStorage
+        function loadSearchHistory() {
+            var history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+            var $historyList = $("#search-history");
+            $historyList.empty();
+            history.forEach(function(city) {
+                $historyList.append('<li><a href="#" class="history-item">' + city + '</a></li>');
+            });
+
+            if (history.length > 0) {
+                $("#last-search").text(history[0]);
+                $("#last-search-container").show();
+            } else {
+                $("#last-search-container").hide();
+            }
+
+            // Обработка клика по элементу истории
+            $(".history-item").click(function(e) {
+                e.preventDefault();
+                var city = $(this).text();
+                $("#city").val(city);
+                getWeather(city);
+            });
+        }
+    });
+
+    let citiesData = [];
+    const input = document.getElementById('city');
+
+
+    // Обработка пользовательского ввода
+    input.addEventListener('input', async function() {
+        const inputValue = this.value.trim();
+
+        if (inputValue.length <= 2) {
+            if (inputValue.length === 0) {
+                $("#city").autocomplete("option", "source", []);
+            }
+            return;
+        }
+
+        if (inputValue.length === 3) {
+            try {
+                $("#city").autocomplete({
+                    minLength: 0,
+                    source: function(request, response) {
+                        $.getJSON(`/autocomplete?name=${inputValue}`, function(data) {
+                            citiesData = data;
+                            response(citiesData);
+                        });
+                    },
+                    select: function(event, ui) {
+                        $("#city").val(ui.item.value);
+                        return false;
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching cities:", error);
+            }
+        } else {
+            updateSuggestions(inputValue);
+        }
+    });
+
+    // Фильтрация для последующих букв
+    function updateSuggestions(inputValue) {
+        const filteredCities = citiesData.filter(city =>
+            city.toLowerCase().startsWith(inputValue.toLowerCase())
+        );
+        $("#city").autocomplete("option", "source", filteredCities);
+        $("#city").autocomplete("search", inputValue);
+    }
+
+    </script>
+</body>
+</html>
